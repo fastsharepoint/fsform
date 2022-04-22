@@ -1,0 +1,32 @@
+.relatedlist_container {
+    width: 100%;
+
+    .relatedlist_col_container {
+        display: flex;
+        
+        .relatedist_col {
+            width: 100%;
+    
+            &.relatedist_col_one {
+                width: 100%;
+            }
+    
+            &.relatedist_col_two {
+                width: 50%;
+            }
+    
+            &.relatedist_col_three {
+                width: 33%;
+            }
+    
+            &.relatedist_col_four {
+                width: 25%;
+            }
+    
+            &.relatedist_col_five {
+                width: 20%;
+            }
+        }
+    }
+
+}

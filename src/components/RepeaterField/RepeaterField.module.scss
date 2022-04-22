@@ -1,0 +1,81 @@
+.repeater_field_container {
+    width: 100%;
+
+    a {
+        &:hover {
+            cursor: pointer;
+        }
+    }
+    .repeater_field_header {
+
+        .repeater_field_title {
+            font-weight: bold;
+        }
+    }
+
+    .repeater_field_body {
+        width: 100%;
+
+        .repeater_field_body_headers {
+            width: 100%;
+            display: flex;
+
+            div {
+                flex-direction: column;
+            }
+        }
+
+        .repeater_field_body_rows {
+            width: 100%;
+            
+            div {
+                display: flex;
+
+                div {
+                    flex-direction: row;
+                    display: flex;
+
+
+                }
+            }
+            .repeater_field_body_row {
+                        
+                div {
+                    flex-direction: row; 
+                }
+
+                .repeater_field_body_row_field {
+                    flex-direction: row; 
+
+                    &.repeater_field_body_row_field_one {
+                        width: 50%;
+                    }
+
+                    &.repeater_field_body_row_field_two {
+                        width: 33%;
+                    }
+
+                    &.repeater_field_body_row_field_three {
+                        width: 25%;
+                    }
+
+                    input {
+                        width: 100%;
+                    }
+
+                    select {
+                        width: 100%;
+                    }
+
+                    textarea {
+                        width: 100%;
+                    }
+                }
+
+                .repeater_field_body_row_remove {
+                    padding: 8px;
+                }
+            }            
+        }
+    }  
+}

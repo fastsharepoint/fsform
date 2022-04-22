@@ -1,0 +1,1 @@
+export { IRelatedListSchema , IRelatedListColumn, RelatedList } from "./RelatedList";
