@@ -8,6 +8,7 @@ node_modules
 
 # Build generated files
 dist
+dist_compressed
 lib
 release
 solution

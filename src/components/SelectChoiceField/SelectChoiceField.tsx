@@ -1,52 +1,43 @@
 import * as React from 'react';
-import { BaseField } from '../BaseField/BaseField';
-import { IChoiceFieldValue, IChoices } from '../Types';
-import { SPHttpClient, SPHttpClientResponse, ISPHttpClientOptions } from '@microsoft/sp-http';
+import { useState } from 'react';
+import { IChoiceFieldValue } from '../Types';
+import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 
+function SelectChoiceField(props) {
 
-class SelectChoiceField extends BaseField {
-    constructor(props) {
-        super(props);
-        this.state = {
-            value: this.props.value !== 'undefined' ? this.props.value : this.props.defaultvalue !== undefined ? this.props.defaultvalue : '', 
-            choices: [],
-            fieldinfo: {Required: false, TypeAsString: '', MaxLength: 255, ReadOnlyField: false, Description: ''}
-        };
-        this.handleChange = this.handleChange.bind(this);
-        this.getFieldChoices(this.props.list, this.props.field);
-    }
+    const [choices, setChoices] = useState([]);
+    const [value, setValue] = useState(props.value !== 'undefined' ? props.value : props.defaultvalue !== undefined ? props.defaultvalue : '');
+    const [initiated, setInitiated] = useState(false);
 
-    public getFieldChoices(list: string, field: string): void {
-            this.props.webpartcontext.spHttpClient.get(this.props.webpartcontext.pageContext.web.absoluteUrl + `/_api/web/lists/GetByTitle('` + list + `')` + `/fields?$filter=EntityPropertyName eq '` + field +`'`, SPHttpClient.configurations.v1)
+    const getChoices = () => {
+        if (!initiated) {
+            setInitiated(true);
+            props.webpartcontext.spHttpClient.get(props.webpartcontext.pageContext.web.absoluteUrl + `/_api/web/lists/GetByTitle('` + props.list + `')` + `/fields?$filter=EntityPropertyName eq '` + props.field +`'`, SPHttpClient.configurations.v1)
             .then((response: SPHttpClientResponse) => {
                 response.json().then((choices: IChoiceFieldValue) => {
             
-                this.setState({choices: choices.value[0].Choices});
+                    if (choices.value.length > 0)
+                        setChoices(choices.value[0].Choices);
 
+                });
             });
-        });
+        }
     }
 
-    handleChange(event) {
-        this.setState({value: event.target.value});
-    }
+    getChoices();
 
-    render() {
-        const options = this.state.choices.map((choice: string, i: number) =>
-            <option key={i} value={choice}>{choice}</option>
-        );
+    const options = choices.map((choice: string, i: number) =>
+        <option key={i} value={choice}>{choice}</option>
+    );
 
-        const required = this.state.fieldinfo.Required ? this.state.fieldinfo.Required : false;
-        const disabled = this.state.fieldinfo.ReadOnlyField ? this.state.fieldinfo.ReadOnlyField : false;
-
-        return (
-            this.props.mode === 'edit'
-            ?
-            <select className={'fsselectinput'} value={this.state.value} onChange={this.handleChange} data-type='choice' data-field={this.props.field} disabled={disabled} required={required}>{options}</select>
-            :
-            <div className={'fsselectinputvalue'}>{this.state.value}</div>
-            );
-    }
+    return (
+        
+        props.mode === 'edit' 
+        ?
+        <select className={'fsselectinput'} value={value} onChange={(e) => setValue(e.target.value)} data-type='choice' data-field={props.field} disabled={props.disabled} required={props.required}>{options}</select>
+        :
+        <div className={'fsselectinputvalue'}>{value}</div>
+    );
 }
 
 export default SelectChoiceField;

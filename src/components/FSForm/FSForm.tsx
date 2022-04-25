@@ -1,26 +1,10 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPHttpClient, SPHttpClientResponse, ISPHttpClientOptions } from '@microsoft/sp-http';
 import styles from './FSForm.module.scss';
 
-type MyProps = {
-    //children: JSX.Element;
-    webpartcontext: WebPartContext;
-    list: string;
-    id: string;
-    mode: string;
-    returnurl: string;
-    submitmessage?: string;
-};
-
-type MyState = {
-    elements: any;
-    id: string;
-};
-
 interface EnrichedChildren {
-    //onChange(): void
-    //selectedValue: string
     children?: React.ReactNode
     webpartcontext: WebPartContext
     value: string
@@ -28,24 +12,9 @@ interface EnrichedChildren {
     list: string
   }
 
-
-
-
-
-class FSForm extends React.Component<MyProps, MyState> {
-    constructor(props) {
-        super(props);
-
-        this.setState({elements: this.enrichRadioElements(this.props.children, this.props.webpartcontext, ''), id: this.props.id !== '' ? this.props.id : '0'});
-    
-        const item = this.getItem(this.props.id).then((results) => {
-            this.setState({elements: this.enrichRadioElements(this.props.children, this.props.webpartcontext, results)});
-        })
-
-        this.handleClose = this.handleClose.bind(this);
-    }
-
-    enrichRadioElements = (children: React.ReactNode, webpartcontext: WebPartContext, item: any, value: string = '', mode: string = this.props.mode, list: string = this.props.list, id: string = parseInt(this.props.id) > parseInt(this.state.id) ? this.props.id : this.state.id): any =>
+  function FSForm(props) {
+  
+    const enrichRadioElements = (children: React.ReactNode, webpartcontext: WebPartContext, item: any, value: string = '', mode: string = props.mode, list: string = props.list, id: string = parseInt(props.id) > parseInt(stateid) ? props.id : stateid): any =>
     {
        return React.Children.map(children, child => {
 
@@ -53,16 +22,9 @@ class FSForm extends React.Component<MyProps, MyState> {
              return child
            }
 
-      
-           //const elementChildInfo: {props: {field} = child.props;
-           //console.log(elementChildInfo.children.type.name);
            let elementChild: React.ReactElement<EnrichedChildren> = child;
          
            const elementInfo: any = child.props.children;
-           //if (elementInfo.type.name === "TextField")
-
-           //console.log(elementInfo);
-
 
            const getValue = () => {
             let fieldname = '';
@@ -73,9 +35,8 @@ class FSForm extends React.Component<MyProps, MyState> {
   
             let fieldvalue = '';
             if (fieldname !== "") {
-              //console.log(this.props.id);
+
               if (elementInfo.type.name === 'ImageField') {
-                //fieldvalue = item[fieldname].Url
                 try {
                   fieldvalue = item[fieldname].Url
                 }
@@ -84,8 +45,6 @@ class FSForm extends React.Component<MyProps, MyState> {
               else {
                 fieldvalue = item[fieldname];
               }
-                
-                //console.log(item[fieldname]);
             }
 
             return fieldvalue + '';
@@ -94,14 +53,12 @@ class FSForm extends React.Component<MyProps, MyState> {
            if (child.props.children) {
       
              child = React.cloneElement<EnrichedChildren>(elementChild, {
-               children: this.enrichRadioElements(elementChild.props.children, webpartcontext, item, getValue(), mode, list, id),
+               children: enrichRadioElements(elementChild.props.children, webpartcontext, item, getValue(), mode, list, id),
              })
            }
            
 
            return React.cloneElement(child as React.ReactElement<any>, {
-              //onChange: () => {},
-              //selectedValue: 'value'
               webpartcontext: webpartcontext,
               value: value,
               mode: mode,
@@ -109,58 +66,52 @@ class FSForm extends React.Component<MyProps, MyState> {
               itemid: id
             })
       
-           //console.log(child.props.type);
-           //if (elementChildInfo.children.type.name === 'SelectChoiceField') {
-             //const selectedchoiceprops: SelectedChoiceProps = elementChildInfo.children.props;
-             //console.log(selectedchoiceprops.list);
-             //return React.cloneElement(elementChild, {
-             //  //onChange: () => {},
-             //  //selectedValue: 'value'
-             //  webpartcontext: this.webpartcontext
-             //})
-           //} else {
-           //  return elementChild
-           //}
          })
     }
 
-    state: MyState = {
-        elements: [],
-        id: '0'
-    };
+    const [elements, setElements] = useState();
+    const [stateid, setId] = useState(props.id);
+    const [initiated, setInitiated] = useState(false);
 
-    private listPath: string = `/_api/web/lists/GetByTitle('` + this.props.list + `')`;
+    const listPath: string = `/_api/web/lists/GetByTitle('` + props.list + `')`;
 
-    webpartcontext = this.props.webpartcontext;
+    const webpartcontext = props.webpartcontext;
 
-    public getItem(id: string): Promise<any> {
-        return this.webpartcontext.spHttpClient.get(this.webpartcontext.pageContext.web.absoluteUrl + this.listPath + `/items(${id})`, SPHttpClient.configurations.v1)
-          .then((response: SPHttpClientResponse) => {
-            return response.json();
-          });
+    const getItem = (id: string): Promise<any> => {
+      return webpartcontext.spHttpClient.get(webpartcontext.pageContext.web.absoluteUrl + listPath + `/items(${id})`, SPHttpClient.configurations.v1)
+        .then((response: SPHttpClientResponse) => {
+          return response.json();
+        });
     }
 
-    submitForm = (event: React.FormEvent<HTMLFormElement>) => {
-        // Preventing the page from reloading
+    if (!initiated) {
+      setInitiated(true);
+      getItem(props.id).then((results) => {
+        setElements(enrichRadioElements(props.children, props.webpartcontext, results));
+      })
+    }
+
+    const submitForm = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
     
-        this.saveItem(this.state.id);
-        // Do something 
-        //alert(term);
+        saveItem(stateid);
+
+        if (props.onsave)
+          props.onsave(stateid);
     }
 
-    handleClose = (event) => {
-      window.location.href=this.props.returnurl;
+    const handleClose = (event) => {
+      if (props.onclose)
+        props.onclose();
     }
 
-    public saveItem(id: string) {
+    const saveItem = (id: string) => {
 
         let bodytmp = {}
 
         const formFields = document.querySelectorAll('[data-field]');
         formFields.forEach((element) => {
             const inputElement =  element as HTMLInputElement;
-            //console.log(inputElement.dataset.field)
             if (inputElement.dataset.field !== '') {
               if (inputElement.dataset.type === 'image') {
                 bodytmp[inputElement.dataset.field] = {Description: inputElement.value, Url: inputElement.value}
@@ -175,7 +126,7 @@ class FSForm extends React.Component<MyProps, MyState> {
         const body = JSON.stringify(bodytmp);
 
 
-      this.webpartcontext.spHttpClient.post(this.webpartcontext.pageContext.web.absoluteUrl + this.listPath + `/items` + (id != '0' ? `(` + id + `)` : ``), SPHttpClient.configurations.v1, 
+      webpartcontext.spHttpClient.post(webpartcontext.pageContext.web.absoluteUrl + listPath + `/items` + (id != '0' ? `(` + id + `)` : ``), SPHttpClient.configurations.v1, 
       {
         headers: {
         'Accept': 'application/json;odata.metadata=minimal',
@@ -191,14 +142,12 @@ class FSForm extends React.Component<MyProps, MyState> {
           return response.json().then((reason) => {console.log(reason)});
         else {
 
-          alert(this.props.submitmessage ? this.props.submitmessage : 'Saved');
-
           if (id != '0') {
             console.log('form submitted successfully')
           }
           else {
             response.json().then((data) => {
-              this.setState({id: data.ID})
+              setId(data.ID)
             });
           }
           
@@ -208,25 +157,17 @@ class FSForm extends React.Component<MyProps, MyState> {
       } );
     }
 
+      return (
+        <form onSubmit={submitForm}>
+        {elements}
+        {props.mode === 'edit' ?
+        <div className={styles.button_container}><button type='submit'>Save</button><button type='button' onClick={handleClose}>Close</button></div>
+        :
+        <div className={styles.button_container}><button type='button' onClick={handleClose}>Close</button></div>
+        }
+        </form>
+      );
+  }
+  
+  export default FSForm;
 
-
-
-    render() {
-
-        return (
- 
-
-            <form onSubmit={this.submitForm}>
-                {this.state.elements}
-                {this.props.mode === 'edit' ?
-                <div className={styles.button_container}><button type='submit'>Save</button><button type='button' onClick={this.handleClose}>Close</button></div>
-                :
-                <div className={styles.button_container}><button type='button' onClick={this.handleClose}>Close</button></div>
-                }
-            </form>
-        );
-    }
-
-}
-
-export default FSForm
